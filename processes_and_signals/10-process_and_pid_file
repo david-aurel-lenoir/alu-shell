@@ -1,0 +1,162 @@
+Vi editor solutions and explanationsClaude finished the responseYou said: read the requirement, and help me with detailed solutions and explanations to the different tasks.read the requirement, and help me with detailed solutions and explanations to the different tasks. using vi editor of preference8:17 PMClaude responded: I'll provide solutions for all 9 tasks.I'll provide solutions for all 9 tasks. Each script follows the requirements (shebang, comment on line 2, executable, ShellCheck-clean).
+0. What is my PID
+bash#!/usr/bin/env bash
+# Displays its own PID
+echo $$
+$$ is a special variable that expands to the PID of the current shell running the script.
+Create it:
+bashvi 0-what-is-my-pid
+chmod +x 0-what-is-my-pid
+
+1. List your processes
+bash#!/usr/bin/env bash
+# Displays a list of currently running processes
+ps -aux -H
+a = all users' processes, u = user-oriented format, x = include processes without a TTY, -H (or f) = show process hierarchy.
+
+2. Show your Bash PID
+bash#!/usr/bin/env bash
+# Displays lines containing the bash word from running processes
+# shellcheck disable=SC2009
+ps -aux | grep bash
+The third line disables SC2009 (ShellCheck would suggest pgrep, but the task forbids it). grep bash filters the ps output to lines mentioning bash, so you can read off the Bash PID.
+
+3. Show your Bash PID made easy
+bash#!/usr/bin/env bash
+# Displays the PID and process name of processes containing the word bash
+pgrep -l bash
+ps is forbidden here, so pgrep is the tool. -l lists both the PID and the process name. This matches the expected output format (4404 bash).
+
+4. To infinity and beyond
+bash#!/usr/bin/env bash
+# Displays "To infinity and beyond" indefinitely
+while true
+do
+	echo "To infinity and beyond"
+	sleep 2
+done
+An infinite while true loop printing the message, pausing 2 seconds each iteration.
+
+5. Don't stop me now!
+bash#!/usr/bin/env bash
+# Stops the 4-to_infinity_and_beyond process using kill
+kill "$(pgrep -f 4-to_infinity_and_beyond)"
+pgrep -f 4-to_infinity_and_beyond finds the PID by matching the full command line, then kill sends the default SIGTERM signal to terminate it.
+
+6. Stop me if you can
+bash#!/usr/bin/env bash
+# Stops the 4-to_infinity_and_beyond process without using kill or killall
+pkill -f 4-to_infinity_and_beyond
+kill/killall are forbidden, so pkill is used. -f matches against the full command line and sends the signal directly by name.
+
+7. Highlander
+bash#!/usr/bin/env bash
+# Displays "To infinity and beyond" with sleep 2, and "I am invincible!!!" on SIGTERM
+trap 'echo "I am invincible!!!"' SIGTERM
+
+while true
+do
+	echo "To infinity and beyond"
+	sleep 2
+done
+trap catches the SIGTERM signal and runs the echo instead of terminating, making the process "invincible" against a normal kill.
+Then copy task 6 into 67-stop_me_if_you_can, changing the target:
+bash#!/usr/bin/env bash
+# Kills the 7-highlander process
+pkill -f 7-highlander
+(Create it with cp 6-stop_me_if_you_can 67-stop_me_if_you_can then edit the target name in vi.)
+
+8. Beheaded process
+bash#!/usr/bin/env bash
+# Kills the 7-highlander process using SIGKILL
+pkill -9 -f 7-highlander
+Since 7-highlander traps SIGTERM and won't die from a normal kill, you send SIGKILL (-9), which cannot be trapped or ignored. The terminal running 7-highlander shows Killed.
+
+Finishing up each file
+For every script:
+bashchmod +x <filename>
+shellcheck <filename>      # must pass clean
+Make sure each file ends with a newline (vi does this automatically when you save), and create a README.md at the root of the repo.
+Note on tabs vs spaces: in the loop bodies above I used tab indentation — that's fine for bash. If you want, I can write all 9 files plus a README into your repo directory so you can download them directly. Want me to do that?You said: "Create it with cp 6-stopmeifyoucan 67-stopmeifyoucan then edit the target name in vi."Create it with cp 6-stop_me_if_you_can 67-stop_me_if_you_can then edit the target name in vi.)" steps for this8:43 PMClaude responded: Here are the steps for creating 67-stopmeifyoucan from your task 6 script:Here are the steps for creating 67-stop_me_if_you_can from your task 6 script:
+1. Copy the file:
+bashcp 6-stop_me_if_you_can 67-stop_me_if_you_can
+2. Open the copy in vi:
+bashvi 67-stop_me_if_you_can
+3. Edit in vi:
+The file currently looks like this:
+bash#!/usr/bin/env bash
+# Stops the 4-to_infinity_and_beyond process without using kill or killall
+pkill -f 4-to_infinity_and_beyond
+You need to change 4-to_infinity_and_beyond to 7-highlander on both the comment line and the command line.
+
+Press i to enter insert mode and edit manually, or use vi's find-and-replace (faster): press Esc first to be sure you're in normal mode, then type:
+
+:%s/4-to_infinity_and_beyond/7-highlander/g
+Press Enter. This replaces every occurrence in the file at once.
+4. Save and quit:
+Press Esc, then type:
+:wq
+Press Enter.
+5. The result should be:
+bash#!/usr/bin/env bash
+# Kills the 7-highlander process
+pkill -f 7-highlander
+(If you also want to tidy the comment wording from "Stops...without using kill or killall" to "Kills the 7-highlander process", do that manually in insert mode — the :%s only swaps the process name.)
+6. Make it executable:
+bashchmod +x 67-stop_me_if_you_can
+7. Verify:
+bashshellcheck 67-stop_me_if_you_can
+That's it. The substitution command (:%s/old/new/g) is the quickest way — % means whole file, g means every match on each line.You said: error on task 1error on task 18:54 PMClaude responded: The check failing is "Your Bash script return running processes according to requirements.The check failing is "Your Bash script return running processes according to requirements." The issue is almost certainly the flag combination in task 1.
+The requirements were:
+
+All processes, all users, including those without a TTY
+User-oriented format
+Process hierarchy
+
+The problem with ps -aux -H: when you mix the BSD style (aux, no dash) with -H (a flag that needs the dash), the hierarchy display can behave inconsistently, and the checker may not see the expected output.
+Try this instead — pure BSD syntax with f for the forest/hierarchy view:
+bash#!/usr/bin/env bash
+# Displays a list of currently running processes
+ps axuf
+Wait — that's the wrong format. Let me give you the version that matches the expected output in the task screenshot (which showed the USER PID %CPU %MEM VSZ RSS TTY STAT START TIME COMMAND header with \_ hierarchy markers):
+bash#!/usr/bin/env bash
+# Displays a list of currently running processes
+ps axuf
+Here's the breakdown:
+
+a = all users' processes
+x = include processes with no controlling TTY
+u = user-oriented format (gives the USER PID %CPU %MEM ... columns)
+f = ASCII-art process hierarchy (the \_ tree markers shown in the expected output)
+
+ps axuf produces exactly the header and the \_ hierarchy tree from the task example, which ps -aux -H does not reliably reproduce.
+Steps to fix:
+bashvi 1-list_your_processes
+Replace the ps line with ps axuf, save (:wq), then:
+bashshellcheck 1-list_your_processes
+Then commit, push, and request a new review.
+If ps axuf still fails, the alternate accepted form is:
+bashps -auxf
+but try ps axuf first — mixing the dash with BSD options is what tends to trip the checker.8:58 PMClaude responded: This is task 9 (advanced).This is task 9 (advanced). Let me read the requirements from the screenshot:
+Write a Bash script that:
+
+Creates the file /var/run/myscript.pid containing its PID
+Displays To infinity and beyond indefinitely
+Displays I hate the kill command when receiving a SIGINT signal
+Displays Y u no love me?! when receiving a SIGQUIT signal
+Deletes the file /var/run/myscript.pid and terminates itself when receiving a SIGQUIT or SIGTERM signal
+
+Here's the solution:
+bash#!/usr/bin/env bash
+# Manages a PID file and handles signals while looping infinitely
+echo "$$" > /var/run/myscript.pid
+
+trap 'echo "I hate the kill command"' SIGINT
+trap 'echo "Y u no love me?!"; rm -f /var/run/myscript.pid; exit' SIGQUIT
+trap 'rm -f /var/run/myscript.pid; exit' SIGTERM
+
+while true
+do
+	echo "To infinity and beyond"
+	sleep 2
+done
